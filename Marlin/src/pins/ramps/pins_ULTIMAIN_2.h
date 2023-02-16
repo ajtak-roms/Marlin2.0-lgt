@@ -16,7 +16,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 #pragma once
@@ -33,13 +33,12 @@
  *    case light
  */
 
-#ifndef __AVR_ATmega2560__
-  #error "Oops! Select 'Arduino/Genuino Mega or Mega 2560' in 'Tools > Board.'"
-#endif
+#define REQUIRE_MEGA2560
+#include "env_validate.h"
 
 #define BOARD_INFO_NAME         "Ultimaker 2.x"
 #define DEFAULT_MACHINE_NAME    "Ultimaker"
-#define DEFAULT_SOURCE_CODE_URL "https://github.com/Ultimaker/Marlin"
+#define DEFAULT_SOURCE_CODE_URL "github.com/Ultimaker/Marlin"
 
 //
 // Limit Switches
@@ -98,7 +97,9 @@
   #define FAN_PIN                              7
 #endif
 
-#define ORIG_E0_AUTO_FAN_PIN                  77
+#ifndef E0_AUTO_FAN_PIN
+  #define E0_AUTO_FAN_PIN                     77
+#endif
 
 //
 // Misc. Functions
@@ -106,8 +107,8 @@
 #define SDSS                                  53
 #define SD_DETECT_PIN                         39
 #define LED_PIN                                8
-#define SAFETY_TRIGGERED_PIN                  28  // PIN to detect the safety circuit has triggered
-#define MAIN_VOLTAGE_MEASURE_PIN              14  // ANALOG PIN to measure the main voltage, with a 100k - 4k7 resitor divider.
+//#define SAFETY_TRIGGERED_PIN                28  // PIN to detect the safety circuit has triggered
+//#define MAIN_VOLTAGE_MEASURE_PIN            14  // ANALOG PIN to measure the main voltage, with a 100k - 4k7 resitor divider.
 
 //
 // LCD / Controller

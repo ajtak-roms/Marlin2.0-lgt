@@ -16,12 +16,12 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 #pragma once
 
-#include "../shared/Marduino.h"
+#include "../../inc/MarlinConfig.h" // Allow pins/pins.h to override SDIO clock / retries
 
 #include <libmaple/sdio.h>
 #include <libmaple/dma.h>
@@ -93,14 +93,20 @@
 #define SDIO_GET_FLAG(__FLAG__)              !!((SDIO->STA) & (__FLAG__))
 #define SDIO_CLEAR_FLAG(__FLAG__)            (SDIO->ICR = (__FLAG__))
 
-#define SDMMC_MAX_VOLT_TRIAL                 0x000000FFU    /* shorten attempt time; original value: 0x00000FFFU */
+#define SDMMC_MAX_VOLT_TRIAL                 0x00000FFFU
 #define SDIO_CARD_TRANSFER                   0x00000004U    /* Card is in transfer state */
 #define SDIO_CARD_ERROR                      0x000000FFU    /* Card response Error */
 #define SDIO_CMDTIMEOUT                      200U           /* Command send and response timeout */
 #define SDIO_DATA_TIMEOUT                    100U           /* Read data transfer timeout */
 #define SDIO_WRITE_TIMEOUT                   200U           /* Write data transfer timeout */
 
-#define SDIO_CLOCK                           18000000       /* 18 MHz */
+#ifndef SDIO_CLOCK
+  #define SDIO_CLOCK                         18000000       /* 18 MHz */
+#endif
+
+#ifndef SDIO_READ_RETRIES
+  #define SDIO_READ_RETRIES                  3
+#endif
 
 // ------------------------
 // Types

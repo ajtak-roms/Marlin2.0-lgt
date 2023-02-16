@@ -16,7 +16,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 #pragma once
@@ -36,6 +36,18 @@
 
 #ifndef BOARD_INFO_NAME
   #define BOARD_INFO_NAME "Sanguinololu 1.2"
+#endif
+
+#define HEATER_BED_PIN                        12  // (bed)
+#define X_ENABLE_PIN                          14
+#define Y_ENABLE_PIN                          14
+#ifndef Z_ENABLE_PIN
+  #define Z_ENABLE_PIN                        26
+#endif
+#define E0_ENABLE_PIN                         14
+
+#if !defined(FAN_PIN) && ENABLED(LCD_I2C_PANELOLU2)
+  #define FAN_PIN                              4  // Uses Transistor1 (PWM) on Panelolu2's Sanguino Adapter Board to drive the fan
 #endif
 
 #define SANGUINOLOLU_V_1_2

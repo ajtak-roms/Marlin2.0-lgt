@@ -16,7 +16,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
@@ -27,11 +27,10 @@
 #include "../gcode.h"
 #include "../../sd/cardreader.h"
 #include "../../module/printcounter.h"
-#include "../../lcd/ultralcd.h"
+#include "../../lcd/marlinui.h"
 
 #if ENABLED(PARK_HEAD_ON_PAUSE)
   #include "../../feature/pause.h"
-  #include "../queue.h"
 #endif
 
 #if ENABLED(HOST_ACTION_COMMANDS)
@@ -42,21 +41,21 @@
   #include "../../feature/powerloss.h"
 #endif
 
-#include "../../MarlinCore.h" // for startOrResumeJob
-
-#if ENABLED(LGT_LCD_TFT)
-  #include "../../longer3d/lgttftlcd.h"
+#if ENABLED(DGUS_LCD_UI_MKS)
+  #include "../../lcd/extui/dgus/DGUSDisplayDef.h"
 #endif
 
-#if ENABLED(LGT_LCD_DW)
-  #include "../../lcd/lgtdwlcd.h"
-#endif //ENABLED(LGT_LCD_DW)
-
+#include "../../MarlinCore.h" // for startOrResumeJob
 
 /**
  * M24: Start or Resume SD Print
  */
 void GcodeSuite::M24() {
+
+  #if ENABLED(DGUS_LCD_UI_MKS)
+    if ((print_job_timer.isPaused() || print_job_timer.isRunning()) && !parser.seen("ST"))
+      MKS_resume_print_move();
+  #endif
 
   #if ENABLED(POWER_LOSS_RECOVERY)
     if (parser.seenval('S')) card.setIndex(parser.value_long());
@@ -71,39 +70,29 @@ void GcodeSuite::M24() {
   #endif
 
   if (card.isFileOpen()) {
-    card.startFileprint();            // SD card will now be read for commands
+    card.startOrResumeFilePrinting();            // SD card will now be read for commands
     startOrResumeJob();               // Start (or resume) the print job timer
-    #if ENABLED(POWER_LOSS_RECOVERY)
-      recovery.prepare();
-    #endif
+    TERN_(POWER_LOSS_RECOVERY, recovery.prepare());
   }
 
   #if ENABLED(HOST_ACTION_COMMANDS)
     #ifdef ACTION_ON_RESUME
-      host_action_resume();
+      hostui.resume();
     #endif
-    #if ENABLED(HOST_PROMPT_SUPPORT)
-      host_prompt_open(PROMPT_INFO, PSTR("Resuming SD"), DISMISS_STR);
-    #endif
+    TERN_(HOST_PROMPT_SUPPORT, hostui.prompt_open(PROMPT_INFO, F("Resuming SD"), FPSTR(DISMISS_STR)));
   #endif
 
   ui.reset_status();
-
-  #if ENABLED(LGT_LCD_TFT)
-    lgtlcdtft.setPrintCommand(E_PRINT_PAUSE);
-  #endif
-
 }
 
 /**
  * M25: Pause SD Print
+ *
+ * With PARK_HEAD_ON_PAUSE:
+ *   Invoke M125 to store the current position and move to the park
+ *   position. M24 will move the head back before resuming the print.
  */
 void GcodeSuite::M25() {
-
-  // Set initial pause flag to prevent more commands from landing in the queue while we try to pause
-  #if ENABLED(SDSUPPORT)
-    if (IS_SD_PRINTING()) card.pauseSDPrint();
-  #endif
 
   #if ENABLED(PARK_HEAD_ON_PAUSE)
 
@@ -111,30 +100,27 @@ void GcodeSuite::M25() {
 
   #else
 
-    #if ENABLED(POWER_LOSS_RECOVERY)
+    // Set initial pause flag to prevent more commands from landing in the queue while we try to pause
+    #if ENABLED(SDSUPPORT)
+      if (IS_SD_PRINTING()) card.pauseSDPrint();
+    #endif
+
+    #if ENABLED(POWER_LOSS_RECOVERY) && DISABLED(DGUS_LCD_UI_MKS)
       if (recovery.enabled) recovery.save(true);
     #endif
 
     print_job_timer.pause();
-    ui.reset_status();
+
+    TERN_(DGUS_LCD_UI_MKS, MKS_pause_print_move());
+
+    IF_DISABLED(DWIN_CREALITY_LCD, ui.reset_status());
 
     #if ENABLED(HOST_ACTION_COMMANDS)
-      #if ENABLED(HOST_PROMPT_SUPPORT)
-        host_prompt_open(PROMPT_PAUSE_RESUME, PSTR("Pause SD"), PSTR("Resume"));
-      #endif
+      TERN_(HOST_PROMPT_SUPPORT, hostui.prompt_open(PROMPT_PAUSE_RESUME, F("Pause SD"), F("Resume")));
       #ifdef ACTION_ON_PAUSE
-        host_action_pause();
+        hostui.pause();
       #endif
     #endif
-
-    #if ENABLED(LGT_LCD_TFT)
-      lgtlcdtft.pausePrint();
-    #endif
-
-    #if ENABLED(LGT_LCD_DW)
-      lgtLcdDw.pausePrint();
-    #endif
-
 
   #endif
 }
